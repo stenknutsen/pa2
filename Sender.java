@@ -109,7 +109,9 @@ public class Sender implements Runnable {
 		    File file = new File("/Users/stenknutsen/Desktop/IO_folder/"+fileName);
 		    FileInputStream is = new FileInputStream(file);
 		    byte[] chunk = new byte[1024];
+		    fileName = fileName+"\n";
 		    byte[] name = fileName.getBytes();
+		    fileName = fileName.trim();
 		    System.out.println("File name length = "+name.length);
 		    
 		    int totalFileLength = (int)file.length();
@@ -169,13 +171,23 @@ public class Sender implements Runnable {
 	//
 	public static void sendFile(String fileName) throws IOException{
 		
+		String host = "localhost";
+		int port = 3000;
+		DatagramSocket socket = new DatagramSocket(3500);
+        InetAddress address = InetAddress.getByName(host);
+		
+		
 		packetizeFile(fileName);
 		System.out.println("total num packets in arr = " +allPackets.size());
 		
 		
 		
 		
-		
+		for(int i=0;i<allPackets.size();i++){
+			DatagramPacket sendPacket = new DatagramPacket(allPackets.get(i), allPackets.get(i).length, address, port);
+			socket.send(sendPacket);
+			
+		}
 		
 		
 		
@@ -205,6 +217,8 @@ public class Sender implements Runnable {
         //clear for next file
         //
 		allPackets.clear();
+		//close port
+		socket.close();
 	
 		
 	}
