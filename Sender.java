@@ -197,7 +197,8 @@ public class Sender implements Runnable {
 		System.out.println("Start index: " +ACKnum);
 		for(startIndex=ACKnum;startIndex<(Math.min(ACKnum+window, allPackets.size()));startIndex++){
 			
-			//for testing only
+			//throttle back on sender
+			//
 			try {
 				Thread.sleep(4);
 			} catch (InterruptedException e) {
@@ -246,7 +247,7 @@ public class Sender implements Runnable {
 	       
 		
 		while(true){ 
-		        int senderPort = 3001;
+		        int senderPort = 3501;
 		       //I picked size 8 for ACK packet. . . 
 		        byte[] message = new byte[8];
 		        DatagramPacket packet = new DatagramPacket(message, message.length);
@@ -267,6 +268,7 @@ public class Sender implements Runnable {
 			                System.out.println("IO Exception");
 			       }
 	        
+			        
 	        //extract ACK info here and:
 			//        
 			//    if using as NACK: resend packet
@@ -274,6 +276,10 @@ public class Sender implements Runnable {
 	        //
 	        //
 			        message = packet.getData();
+			        if(Math.random()<.3){
+		        		socket.close();
+			        	continue;
+		        	}
 			        System.out.println("ACK recieved: " + ByteBuffer.wrap(message).getInt());
 			       
 			        if(message[4]==2){
@@ -281,7 +287,8 @@ public class Sender implements Runnable {
 					        endOfFile = true;
 					        }
 			        }else{
-			        
+			       
+			        	
 			        synchronized(this){
 			        ACKnum = ByteBuffer.wrap(message).getInt();
 			        }
