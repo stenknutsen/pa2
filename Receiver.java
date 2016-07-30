@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 
 public class Receiver {
@@ -54,7 +55,7 @@ public class Receiver {
         boolean gotFileName = false;
         boolean done = false;
         System.out.println("Ready to receive packets!");
-       
+        socket.setSoTimeout(5*1000);
         
         
         
@@ -66,7 +67,13 @@ public class Receiver {
         	byte[] msg = new byte[1124];
         	DatagramPacket receivedPacket = new DatagramPacket(msg, msg.length);
         	
-        	socket.receive(receivedPacket);
+        	try{
+    			socket.receive(receivedPacket);
+    			}catch (SocketTimeoutException e) {
+    				System.out.println("Timeout. . . terminating Reciever program");//socket is still open, but not blocking
+    				System.exit(0);
+    				//continue;
+    			}
         	
         	if(Math.random()<.3){
         		continue;

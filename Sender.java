@@ -182,7 +182,7 @@ public class Sender implements Runnable {
 		DatagramSocket socket = new DatagramSocket(3500);
         InetAddress address = InetAddress.getByName(host);
 		int startIndex = 0;
-		int window = 10;
+		int window = 5;
 		
 		packetizeFile(fileName);
 		System.out.println("total num packets in arr = " +allPackets.size());
@@ -259,14 +259,22 @@ public class Sender implements Runnable {
 			            e.printStackTrace();
 			            System.out.println("Socket excep");
 			        }
-	        
-	        
 			        try {
-			        socket.receive(packet);
-			       }catch (IOException e) {
-			            e.printStackTrace();
-			                System.out.println("IO Exception");
-			       }
+						socket.setSoTimeout(5*1000);
+					} catch (SocketException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+			        
+			        
+	        
+			        try{
+						socket.receive(packet);
+						}catch (IOException e) {
+							System.out.println("Timeout. . . terminating Sender");//socket is still open, but not blocking
+							System.exit(0);
+							//continue;
+						}
 	        
 			        
 	        //extract ACK info here and:
