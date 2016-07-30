@@ -67,6 +67,12 @@ public class Receiver {
         	DatagramPacket receivedPacket = new DatagramPacket(msg, msg.length);
         	
         	socket.receive(receivedPacket);
+        	
+        	if(Math.random()<.3){
+        		continue;
+        	}
+        	
+        	
         	msg = receivedPacket.getData();
         	senderAddress = receivedPacket.getAddress();
             senderPort = receivedPacket.getPort();
@@ -75,11 +81,11 @@ public class Receiver {
         	int index = ByteBuffer.wrap(msg).getInt();
             //System.out.println(ByteBuffer.wrap(msg).getInt());
         	
-        	
-        	if(expectedSeqNum!=index){
         	//System.out.println("Expected: "+expectedSeqNum + ", Received: "+index);
-        	sendACK(index, socket, senderAddress, 3001);
-        	continue;
+        	if(expectedSeqNum!=index){
+        	System.out.println("Expected: "+expectedSeqNum + ", Received: "+index);
+        		sendACK(expectedSeqNum, socket, senderAddress, 3001);
+        		continue;
         	}
         
         	
@@ -125,7 +131,6 @@ public class Receiver {
         		for(int i =0;i<150;i++){
         			
         			
-        	        
         	        DatagramPacket acknowledgement = new  DatagramPacket(ACKet, ACKet.length, senderAddress, 3001);
         	        socket.send(acknowledgement);
         			
@@ -137,7 +142,12 @@ public class Receiver {
         		
         		expectedSeqNum = 0;
         		
-        		
+        		try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         		
         		//break;
         	}

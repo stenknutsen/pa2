@@ -194,8 +194,8 @@ public class Sender implements Runnable {
 		
 		while(!endOfFile){
 		
-		
-		for(startIndex=ACKnum;startIndex<(Math.min(startIndex+window,allPackets.size()));startIndex++){
+		System.out.println("Start index: " +ACKnum);
+		for(startIndex=ACKnum;startIndex<(Math.min(ACKnum+window, allPackets.size()));startIndex++){
 			
 			//for testing only
 			try {
