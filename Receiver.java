@@ -10,6 +10,29 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
 public class Receiver {
+	
+	public static void sendACK(int missedPkt, DatagramSocket socket, InetAddress address, int port) throws IOException {
+        
+        byte[] ACKet = intToByte(missedPkt);
+        
+        DatagramPacket acknowledgement = new  DatagramPacket(ACKet, ACKet.length, address, port);
+        socket.send(acknowledgement);
+        //System.out.println("Sent ACK for: " + missedPkt);
+    }
+
+
+   public static byte[] intToByte(int i ){
+		byte [] arr = new byte [4];
+		arr[0] = (byte) (i >> 24);
+		arr[1] = (byte) (i >> 16);
+		arr[2] = (byte) (i >> 8);
+		arr[3] = (byte) (i);
+		
+		return arr;
+	}
+	
+	
+	
 
 	public static void main(String[] args) throws IOException {
 		
@@ -21,9 +44,12 @@ public class Receiver {
 		
 		DatagramSocket socket = new DatagramSocket(port);
 		
+		
+		
+		
         InetAddress address;
         InetAddress senderAddress= InetAddress.getByName(host);
-        
+        int senderPort = 0;
         int expectedSeqNum = 0;
         boolean gotFileName = false;
         boolean done = false;
@@ -35,14 +61,27 @@ public class Receiver {
         
         
         while(!done){
+        	
+        	
         	byte[] msg = new byte[1124];
         	DatagramPacket receivedPacket = new DatagramPacket(msg, msg.length);
         	
         	socket.receive(receivedPacket);
         	msg = receivedPacket.getData();
-        	
+        	senderAddress = receivedPacket.getAddress();
+            senderPort = receivedPacket.getPort();
+            
+            
         	int index = ByteBuffer.wrap(msg).getInt();
             //System.out.println(ByteBuffer.wrap(msg).getInt());
+        	
+        	
+        	if(expectedSeqNum!=index){
+        	//System.out.println("Expected: "+expectedSeqNum + ", Received: "+index);
+        	sendACK(index, socket, senderAddress, 3001);
+        	continue;
+        	}
+        
         	
         	if(index==0 && gotFileName == false){
         		gotFileName = true;
@@ -67,15 +106,39 @@ public class Receiver {
 			for(int i=0;i<payload.length;i++){	
 				payload[i]=msg[i+100];
 			}
-        	toFile.write(payload);
-        
+        	
+			
+			toFile.write(payload);
+        	expectedSeqNum++;
+        	
+        	
         	//end of file flag
         	//
         	if(msg[4] == 1){
         		System.out.println("End found at: "+ByteBuffer.wrap(msg).getInt() );
         		toFile.close();
         		gotFileName = false;
+        		byte[] ACKet = new byte[8];
+        		ACKet[4] = (byte)0x2;
+        		
+        		//send reset ack
+        		for(int i =0;i<150;i++){
+        			
+        			
+        	        
+        	        DatagramPacket acknowledgement = new  DatagramPacket(ACKet, ACKet.length, senderAddress, 3001);
+        	        socket.send(acknowledgement);
+        			
+        			
+        			
+        			
+        		}
+        		
+        		
         		expectedSeqNum = 0;
+        		
+        		
+        		
         		//break;
         	}
         	

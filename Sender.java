@@ -36,7 +36,7 @@ public class Sender implements Runnable {
 	//
 	public static ArrayList<byte[]> allPackets = new ArrayList();
 	public static int ACKnum = 0;
-	
+	public static boolean endOfFile = false;
 	
 	
 	
@@ -63,10 +63,10 @@ public class Sender implements Runnable {
 		
 		//start ACKListener thread
 		//
-		/*Sender ACKListener = new Sender();
+		Sender ACKListener = new Sender();
         Thread thread = new Thread(ACKListener);
         thread.start();
-        */
+        
         
         
         //grab list of files from a specified folder
@@ -88,6 +88,8 @@ public class Sender implements Runnable {
 					e.printStackTrace();
 				}    
             }
+            
+           
         }
         
         
@@ -99,8 +101,8 @@ public class Sender implements Runnable {
 	
 	
 
-	//each file gets chunked (window size(100)*data payload size(1024) = 102400)
-	//and sent to sendFile
+	//
+	//
 	//	
 	public static void packetizeFile(String fileName) throws IOException{
 		
@@ -171,7 +173,7 @@ public class Sender implements Runnable {
 	
 	
 	
-	//Take chunk, "packetize" and send to receiver
+	//"packetize" file and send to receiver
 	//
 	public static void sendFile(String fileName) throws IOException{
 		
@@ -179,14 +181,22 @@ public class Sender implements Runnable {
 		int port = 3000;
 		DatagramSocket socket = new DatagramSocket(3500);
         InetAddress address = InetAddress.getByName(host);
-		
+		int startIndex = 0;
+		int window = 10;
 		
 		packetizeFile(fileName);
 		System.out.println("total num packets in arr = " +allPackets.size());
 		
 		
 		
-		for(int i=0;i<allPackets.size();i++){
+		
+		
+		
+		while(!endOfFile){
+		
+		
+		for(startIndex=ACKnum;startIndex<(Math.min(startIndex+window,allPackets.size()));startIndex++){
+			
 			//for testing only
 			try {
 				Thread.sleep(4);
@@ -195,33 +205,15 @@ public class Sender implements Runnable {
 				e.printStackTrace();
 			}
 			
-			DatagramPacket sendPacket = new DatagramPacket(allPackets.get(i), allPackets.get(i).length, address, port);
+			DatagramPacket sendPacket = new DatagramPacket(allPackets.get(startIndex), allPackets.get(startIndex).length, address, port);
 			socket.send(sendPacket);
 			
 		}
 		
+		}//end while
 		
 		
 		
-		
-		
-		
-		
-		
-		/*
-		
-		File file = new File("/Users/stenknutsen/Desktop/output/sndr_"+fileName);
-        FileOutputStream toFile = new FileOutputStream(file);
-        for(int i=0;i<allPackets.size();i++){
-        byte[] tmp;
-        tmp = allPackets.get(i);
-        System.out.println("Writing packet: "+i);
-        	for(int j = 100;j<1124;j++){	
-        		toFile.write(tmp[j]);
-        	}	
-        }
-        toFile.close();
-       */
 		
         
         
@@ -230,7 +222,10 @@ public class Sender implements Runnable {
 		allPackets.clear();
 		//close port
 		socket.close();
-	
+		//reset acknum
+		ACKnum = 0;
+		//reset EOF
+		endOfFile = false;
 		
 	}
 	
@@ -251,7 +246,7 @@ public class Sender implements Runnable {
 	       
 		
 		while(true){ 
-		        int senderPort = 3000;
+		        int senderPort = 3001;
 		       //I picked size 8 for ACK packet. . . 
 		        byte[] message = new byte[8];
 		        DatagramPacket packet = new DatagramPacket(message, message.length);
@@ -278,9 +273,20 @@ public class Sender implements Runnable {
 	        //	  if using as ACK: update sent packets information
 	        //
 	        //
-	        
-	        
-	        
+			        message = packet.getData();
+			        System.out.println("ACK recieved: " + ByteBuffer.wrap(message).getInt());
+			       
+			        if(message[4]==2){
+			        	synchronized(this){
+					        endOfFile = true;
+					        }
+			        }else{
+			        
+			        synchronized(this){
+			        ACKnum = ByteBuffer.wrap(message).getInt();
+			        }
+			        }
+			        
 	        socket.close();
 			
 			}
