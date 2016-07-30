@@ -150,11 +150,15 @@ public class Sender implements Runnable {
 		    	//add end byte
 		    	//
 		    	if(sequenceNum == numPackets-1){
+		    		System.out.println("End flag added");
 		    		payload[4] = (byte)0x1;
 		    	}
 		    	
+		    	if(payload[4]==1){
+		    		System.out.println("end flag added");
+		    	}
 		    	
-		    	System.out.println(ByteBuffer.wrap(seq).getInt());
+		    	//System.out.println(ByteBuffer.wrap(seq).getInt());
 		    	
 		    	allPackets.add(payload);
 		    	
@@ -182,8 +186,15 @@ public class Sender implements Runnable {
 		
 		
 		
-		
 		for(int i=0;i<allPackets.size();i++){
+			//for testing only
+			try {
+				Thread.sleep(4);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			DatagramPacket sendPacket = new DatagramPacket(allPackets.get(i), allPackets.get(i).length, address, port);
 			socket.send(sendPacket);
 			
@@ -197,9 +208,9 @@ public class Sender implements Runnable {
 		
 		
 		
-		
 		/*
-		File file = new File("/Users/stenknutsen/Desktop/output/copy_"+fileName);
+		
+		File file = new File("/Users/stenknutsen/Desktop/output/sndr_"+fileName);
         FileOutputStream toFile = new FileOutputStream(file);
         for(int i=0;i<allPackets.size();i++){
         byte[] tmp;
