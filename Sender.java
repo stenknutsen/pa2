@@ -194,7 +194,7 @@ public class Sender implements Runnable {
 		
 		while(!endOfFile){
 		
-		System.out.println("Start index: " +ACKnum);
+		//System.out.println("Start index: " +ACKnum);
 		for(startIndex=ACKnum;startIndex<(Math.min(ACKnum+window, allPackets.size()));startIndex++){
 			
 			//throttle back on sender
@@ -288,7 +288,7 @@ public class Sender implements Runnable {
 		        		socket.close();
 			        	continue;
 		        	}
-			        System.out.println("ACK recieved: " + ByteBuffer.wrap(message).getInt());
+			        //System.out.println("ACK recieved: " + ByteBuffer.wrap(message).getInt());
 			       
 			        if(message[4]==2){
 			        	synchronized(this){
