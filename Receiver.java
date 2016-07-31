@@ -26,7 +26,8 @@ public class Receiver {
     }
 
 	//converts ints to bytes
-   public static byte[] intToByte(int i ){
+	//
+	public static byte[] intToByte(int i ){
 		byte [] arr = new byte [4];
 		arr[0] = (byte) (i >> 24);
 		arr[1] = (byte) (i >> 16);
@@ -34,13 +35,25 @@ public class Receiver {
 		arr[3] = (byte) (i);
 		
 		return arr;
-	}
+	 }
 	
 	
 	
 
 	public static void main(String[] args) throws IOException {
 		
+		float percentLoss = (float).30;
+		
+		
+		//percent loss a CLA, otherwise 30%
+		if(args.length==0){
+			System.out.println("Default percentage loss: 30%");
+			}else{
+				String str = args[0];
+				int result = Integer.parseInt(str);
+				percentLoss = (float)result/100;
+					
+		}
 		
 		File file;
         FileOutputStream toFile = null;
@@ -53,7 +66,7 @@ public class Receiver {
         int expectedSeqNum = 0;
         boolean gotFileName = false;
         boolean done = false;
-        socket.setSoTimeout(5*1000);
+        socket.setSoTimeout(7*1000);
         
         
         
@@ -68,13 +81,13 @@ public class Receiver {
         	DatagramPacket receivedPacket = new DatagramPacket(msg, msg.length);
         	
         	
-        	//if longer than 5 seconds and no communication with Sender,
+        	//if longer than 7 seconds and no communication with Sender,
         	//program terminates.
         	//
         	try{
     			socket.receive(receivedPacket);
     			}catch (SocketTimeoutException e) {
-    				System.out.println("Timeout. . . terminating Reciever program");//socket is still open, but not blocking
+    				System.out.println("Timeout. . . terminating Receiver program");
     				System.exit(0);
     				//continue;
     			}
@@ -82,7 +95,7 @@ public class Receiver {
         	
         	//"throws away" predetermined percentage of packets
         	//
-        	if(Math.random()<.3){
+        	if(Math.random()<percentLoss){
         		continue;
         	}
         	
@@ -112,7 +125,7 @@ public class Receiver {
         		
         		String str = new String(tmp, "UTF-8");
         		str = str.split("\n")[0].trim();
-        		System.out.println("Creating file: "+ str);
+        		System.out.println("Creating file: copy_"+ str);
         		file = new File("/Users/stenknutsen/Desktop/output/copy_"+str);
         		toFile = new FileOutputStream(file); 
         	}
@@ -155,16 +168,9 @@ public class Receiver {
        
         	}
         	
-        	
-        	
-        	
-        	
+  	
         
-        }//end while
-        
-        
-        
-        
+        }//end while     
 
 	}
 

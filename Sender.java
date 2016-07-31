@@ -18,12 +18,11 @@ import java.util.Arrays;
 /*
 *
 *
-*Ideas. . . . 
 *
-*	Payload/message size: 
-*		1024 bytes of data + 436 byte header (sequence number, filename, other stuff) = 1460 bytes 
 *
-*	Each "window" size is 100, so chunk by 102400
+*	
+*
+*	
 *
 *
 *
@@ -31,13 +30,13 @@ import java.util.Arrays;
 
 public class Sender implements Runnable {
 	
-	//initialize whatever data structure will be used to hold packets
-	//to be sent
+	//Array list to store packet buffer
+	//
 	//
 	public static ArrayList<byte[]> allPackets = new ArrayList();
 	public static int ACKnum = 0;
 	public static boolean endOfFile = false;
-	
+	public static float percentLoss = (float).30;
 	
 	
 	//returns 4-byte array representation of int
@@ -61,6 +60,23 @@ public class Sender implements Runnable {
 	
 	public static void main(String[] args) {
 		
+		
+		//percent loss a CLA, otherwise 30%
+		if(args.length==0){
+			System.out.println("Default percentage loss: 30%");
+		}else{
+			String str = args[0];
+			int result = Integer.parseInt(str);
+			percentLoss = (float)result/100;
+			
+		}
+		
+		
+		
+		
+		
+		
+		
 		//start ACKListener thread
 		//
 		Sender ACKListener = new Sender();
@@ -78,7 +94,8 @@ public class Sender implements Runnable {
         //send each file name in list to send
         //
         for (File file : listOfFiles) {
-            if (file.isFile()) {
+            
+        	if (file.isFile()) {
                 if(file.getName().equals(".DS_Store")){//I think this is just a 'Mac thing'
                 	continue;
                 }
@@ -88,25 +105,30 @@ public class Sender implements Runnable {
 					e.printStackTrace();
 				}    
             }
-            
-           
+        	try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+     
         }
         
         
         
-       System.out.println("All files sent."); 
-        
+       System.out.println("All files sent. Shutting down sender. . . . "); 
+       System.exit(0);
 
 	}//end main
 	
 	
 
-	//
+	//takes filename, "packetizes" data and stores in allPackets buffer
 	//
 	//	
 	public static void packetizeFile(String fileName) throws IOException{
 		
-		System.out.println("Chunking: " + fileName);
+		System.out.println("Opening: " + fileName);
 		
 		    File file = new File("/Users/stenknutsen/Desktop/IO_folder/"+fileName);
 		    FileInputStream is = new FileInputStream(file);
@@ -114,14 +136,14 @@ public class Sender implements Runnable {
 		    fileName = fileName+"\n";
 		    byte[] name = fileName.getBytes();
 		    fileName = fileName.trim();
-		    System.out.println("File name length = "+name.length);
+		    
 		    
 		    int totalFileLength = (int)file.length();
 			System.out.println(fileName + " is " + totalFileLength+" bytes.");
 			
 			
 			int  numPackets = (int) Math.ceil((float)totalFileLength/1024);
-			System.out.println("Total pkts needed to xmit: "+ numPackets);//this will be the length of the packet array
+			System.out.println("Total pkts needed to xmit: "+ numPackets +"\n");//this will be the length of the packet array
 		    
 		    
 		    int chunkLen = 0;
@@ -152,15 +174,12 @@ public class Sender implements Runnable {
 		    	//add end byte
 		    	//
 		    	if(sequenceNum == numPackets-1){
-		    		System.out.println("End flag added");
 		    		payload[4] = (byte)0x1;
 		    	}
 		    	
-		    	if(payload[4]==1){
-		    		System.out.println("end flag added");
-		    	}
+		    
 		    	
-		    	//System.out.println(ByteBuffer.wrap(seq).getInt());
+		    	
 		    	
 		    	allPackets.add(payload);
 		    	
@@ -185,7 +204,7 @@ public class Sender implements Runnable {
 		int window = 5;
 		
 		packetizeFile(fileName);
-		System.out.println("total num packets in arr = " +allPackets.size());
+		
 		
 		
 		
@@ -248,7 +267,8 @@ public class Sender implements Runnable {
 		
 		while(true){ 
 		        int senderPort = 3501;
-		       //I picked size 8 for ACK packet. . . 
+		        //I picked size 8 for ACK packet. . . 
+		        //
 		        byte[] message = new byte[8];
 		        DatagramPacket packet = new DatagramPacket(message, message.length);
 		        DatagramSocket socket = null;
@@ -260,9 +280,8 @@ public class Sender implements Runnable {
 			            System.out.println("Socket excep");
 			        }
 			        try {
-						socket.setSoTimeout(5*1000);
+						socket.setSoTimeout(7*1000);
 					} catch (SocketException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 			        
@@ -271,24 +290,20 @@ public class Sender implements Runnable {
 			        try{
 						socket.receive(packet);
 						}catch (IOException e) {
-							System.out.println("Timeout. . . terminating Sender");//socket is still open, but not blocking
+							System.out.println("Timeout. . . terminating Sender");
 							System.exit(0);
-							//continue;
+							
 						}
 	        
 			        
-	        //extract ACK info here and:
-			//        
-			//    if using as NACK: resend packet
-	        //	  if using as ACK: update sent packets information
-	        //
-	        //
+			        //extract ACK info here
+					//       
 			        message = packet.getData();
-			        if(Math.random()<.3){
+			        if(Math.random()<percentLoss){
 		        		socket.close();
 			        	continue;
 		        	}
-			        //System.out.println("ACK recieved: " + ByteBuffer.wrap(message).getInt());
+			       
 			       
 			        if(message[4]==2){
 			        	synchronized(this){
