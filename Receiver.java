@@ -66,7 +66,7 @@ public class Receiver {
         int expectedSeqNum = 0;
         boolean gotFileName = false;
         boolean done = false;
-        socket.setSoTimeout(7*1000);
+        socket.setSoTimeout(10*1000);
         
         
         
@@ -88,6 +88,7 @@ public class Receiver {
     			socket.receive(receivedPacket);
     			}catch (SocketTimeoutException e) {
     				System.out.println("Timeout. . . terminating Receiver program");
+    				socket.close();
     				System.exit(0);
     				//continue;
     			}
@@ -95,7 +96,8 @@ public class Receiver {
         	
         	//"throws away" predetermined percentage of packets
         	//
-        	if(Math.random()<percentLoss){
+        	if(Math.random()<=percentLoss){
+        		
         		continue;
         	}
         	
@@ -111,6 +113,7 @@ public class Receiver {
         	if(expectedSeqNum!=index){
         		//System.out.println("Expected: "+expectedSeqNum + ", Received: "+index);
         		sendACK(expectedSeqNum, socket, senderAddress, 3501);
+        		
         		continue;
         	}
         

@@ -105,12 +105,7 @@ public class Sender implements Runnable {
 					e.printStackTrace();
 				}    
             }
-        	try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+        	
      
         }
         
@@ -201,7 +196,7 @@ public class Sender implements Runnable {
 		DatagramSocket socket = new DatagramSocket(3500);
         InetAddress address = InetAddress.getByName(host);
 		int startIndex = 0;
-		int window = 5;
+		int window = 10;
 		
 		packetizeFile(fileName);
 		
@@ -216,25 +211,33 @@ public class Sender implements Runnable {
 		//System.out.println("Start index: " +ACKnum);
 		for(startIndex=ACKnum;startIndex<(Math.min(ACKnum+window, allPackets.size()));startIndex++){
 			
-			//throttle back on sender
-			//
-			try {
-				Thread.sleep(4);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 			
 			DatagramPacket sendPacket = new DatagramPacket(allPackets.get(startIndex), allPackets.get(startIndex).length, address, port);
 			socket.send(sendPacket);
 			
 		}
 		
+		//throttle back on sender
+		//
+		try {
+			Thread.sleep(2);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 		}//end while
 		
+		System.out.println("File Sent!");
 		
-		
-		
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
         
         //clear for next file
@@ -280,7 +283,7 @@ public class Sender implements Runnable {
 			            System.out.println("Socket excep");
 			        }
 			        try {
-						socket.setSoTimeout(7*1000);
+						socket.setSoTimeout(10*1000);
 					} catch (SocketException e1) {
 						e1.printStackTrace();
 					}
@@ -291,6 +294,7 @@ public class Sender implements Runnable {
 						socket.receive(packet);
 						}catch (IOException e) {
 							System.out.println("Timeout. . . terminating Sender");
+							socket.close();
 							System.exit(0);
 							
 						}
@@ -299,7 +303,7 @@ public class Sender implements Runnable {
 			        //extract ACK info here
 					//       
 			        message = packet.getData();
-			        if(Math.random()<percentLoss){
+			        if(Math.random()<=percentLoss){
 		        		socket.close();
 			        	continue;
 		        	}
