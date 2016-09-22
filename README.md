@@ -1,4 +1,4 @@
-# pa2
+# "Reliable" UDP Sender/Receiver (pa2)
 ##Sender Class:
 The Sender Class opens files from the *sample_testcases* folder and transmits them to the Receiver. Along with the Receiver Class, it employs a Back-to-N protocol in order to ensure complete files are transmitted. In order to simulate network packet loss, a command-line argument of percentage loss may be entered; otherwise a default value of 30% is used.
 	The method *packetizeFile()* reads the targeted file and stores it in a buffer in packet form, header information included. The method *sendFile()*  then uses a “sliding window” to transmit packets to the Receiver.
